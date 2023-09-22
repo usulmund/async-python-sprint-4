@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>async-python-sprint-4</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <p>
+        This link is private. <br /> 
+    </p>
+    <p>
+        Enter username: <br /> 
+        <input username="username" id="username" />
+    </p>
+    <p>
+        Enter password: <br /> 
+        <input password="password" id="password" />
+    </p>
+
+    <button onclick="auth()"> Log in </button>
+    <p></p><br /> 
+    <div id="message"></div>
+    <p></p><br />
+    
+    <input type="button" value="Open" id="checkout-button" name="checkout-button" disabled="disabled" onclick="open_link()">
+
+<script>
+    async function auth(){
+ 
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const response = await fetch("/private_link", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    username: username,
+                    password: password,
+                })
+            });
+            const data = await response.json();
+            document.getElementById("message").textContent = data.message;
+            console.log(response);
+            if (response.ok) {
+                const button = document.getElementById('checkout-button');
+                button.disabled = false;
+            }
+            else {
+                const button = document.getElementById('checkout-button');
+                button.disabled = true;
+            }
+    
+      
+    }
+</script>
+<script>
+    function open_link() {
+        console.log();
+        window.open("<PRIVATE_URL>");
+    }
+</script>
+
+
+</body>
+</html>

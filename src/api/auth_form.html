@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>async-python-sprint-4</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    
+    <p>
+        Enter username: <br /> 
+        <input username="username" id="username" />
+    </p>
+    <p>
+        Enter password: <br /> 
+        <input password="password" id="password" />
+    </p>
+
+    <button onclick="auth()">Log in</button>
+    <p></p><br /> 
+    <div id="message"></div>
+    <p></p><br />
+    <p>
+        Enter URL: <br /> 
+        <input url="url" id="url" />
+    </p>
+    <!-- <p></p><br /> -->
+    <p>
+        Enter users separetes by spaces who can use the link (default = all): <br /> 
+        <input users="users" id="users" />
+    </p>
+    <!-- <p></p><br /> -->
+    <input type="button" value="Generate link" id="checkout-button" name="checkout-button" disabled="disabled" onclick="get_link()">
+    <p></p><br /> 
+    <div id="short_link"></div>
+    <p></p><br />
+    <!-- <input type="button" value="Open" id="checkout-button" name="checkout-button" disabled="disabled" onclick="open_api()"> -->
+    <!-- в случае ошибки в месседж пишем ошибку иначе переотправляем -->
+<script>
+    async function auth(){
+ 
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const response = await fetch("/auth", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    username: username,
+                    password: password,
+                })
+            });
+            const data = await response.json();
+            document.getElementById("message").textContent = data.message;
+            console.log(response);
+            if (response.ok) {
+                const button = document.getElementById('checkout-button');
+                button.disabled = false;
+            }
+            else {
+                const button = document.getElementById('checkout-button');
+                button.disabled = true;
+            }
+    
+            // if (response.ok) {
+            //     const response = await fetch("localhost:8000/go");
+            //     // const response = await fetch("/go", {
+            //     //     method: "GET",
+            //     //     // headers: {"Accept": "application/json", "Content-Type": "application/json" }
+                
+            //     // })
+            //     // const data = await response.json();
+            //     // document.getElementById("message").textContent = data.message;
+            //     // если ок то переходим на страницу го
+            // };
+            // if (response.ok !== true) {
+
+            //     const data = await response.json();
+            //     document.getElementById("message").textContent = data.message;
+            //     // если ок то переходим на страницу го
+            // }
+            // if (response.ok) {
+            //     // const data = await response.json();
+            //     // document.getElementById("message").textContent = data.message;
+            //     // если ок то переходим на страницу го
+            // }
+            // else
+            //     // document.getElementById("message").textContent = data.message;
+            //     console.log(response);
+    }
+</script>
+<!-- <script>
+    function open_api() {
+        console.log();
+        window.open("http://localhost:8000/go");
+    }
+</script> -->
+<script>
+    async function get_link(){
+ 
+        // получаем введеное в поле имя и возраст
+        const url = document.getElementById("url").value;
+        const creator_name = document.getElementById("username").value;
+        const users = document.getElementById("users").value;
+        // отправляем запрос
+        const response = await fetch("/short", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    url: url,
+                    creator_name: creator_name,
+                    users: users,
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById("short_link").textContent = data.short_link;
+            }
+            else
+                console.log(response);
+    }
+</script>
+<!-- <form> -->
+    <!-- <input type="button" value="Open" onclick="open_api()"> -->
+<!-- </form> -->
+    <!-- <button onclick="window.location.href = 'localhost:8000/go';">HOME</button> -->
+
+</body>
+</html>
