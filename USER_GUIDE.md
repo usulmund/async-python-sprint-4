@@ -74,3 +74,8 @@ python3 main.py
 Также есть возможность проверить доступной базы данных: http://localhost:8080/ping
 Будет выведено состояние и количество записей в каждой таблице.
  <p> </p><img src="src/images/db_active.png" alt="db_active" width="400"/> <p> </p>
+
+Информацию по ссылкам можно также просмотреть по адресу http://localhost:8080/user/status
+
+На выходе будет получен подобный ответ:
+ <p> </p><img src="src/images/user_status.png" alt="user_status" width="400"/> <p> </p>
