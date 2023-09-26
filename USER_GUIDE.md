@@ -5,6 +5,29 @@
 pip install -r requirements.txt
 ```
 
+## Переменные окружения
+Cоздайте файл .env с содержимым по примеру .env.example
+
+## Запуск контейнера с тестовой БД
+
+```
+docker run \
+  --rm   \
+  --name postgres-fastapi-test \
+  -p 1234:5432 \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=collection \
+  -d postgres:14.5
+```
+
+
+## Тестирование
+
+```
+pytest
+```
+
 ## Запуск контейнера с БД
 
 ```
@@ -17,19 +40,27 @@ docker run \
   -e POSTGRES_DB=collection \
   -d postgres:14.5
 ```
-## Сброс базы данных
+
+## Миграции
+
+### Выполнить миграции
 ```
-python3 main.py --reset_db
+alembic upgrade head
 ```
 
-## Тестиорование
+### Отменить все миграции
 ```
-pytest
+alembic downgrade base
 ```
 
 ## Запуск сервиса
 ```
 python3 main.py
+```
+
+## Запуск без автоматического применения миграций
+```
+python3 main --migration-off
 ```
 
 ## Пример использования
