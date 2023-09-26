@@ -60,7 +60,7 @@ python3 main.py
 
 ## Запуск без автоматического применения миграций
 ```
-python3 main --migration-off
+python3 main.py --migration-off
 ```
 
 ## Пример использования
