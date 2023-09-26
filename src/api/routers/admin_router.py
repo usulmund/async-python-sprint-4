@@ -5,13 +5,20 @@
 Привязаны к объекту admin_router.
 """
 
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.sql.expression import exists
 
-from models.models import (UrlVisibility, LongShortUrl, UrlInfo, UserPassword)
+from models.models import (
+    UrlVisibility,
+    LongShortUrl,
+    UrlInfo,
+    UserPassword
+)
+from schemas.response_models import JsonEntity
 from db.db import get_session
 from services.logic import get_cnt_action_with_link
 from core.config import (
@@ -36,10 +43,10 @@ async def paginator_response():
     }
 
 
-@admin_router.get('/ping')
+@admin_router.get('/ping', response_model=JsonEntity)
 async def ping_db(
         session: AsyncSession = Depends(get_session)
-) -> dict:
+) -> JsonEntity:
     """
     Корутина для проверки доступности базы данных.
     Опрашивает существующую таблицы, собирает
@@ -49,7 +56,7 @@ async def ping_db(
     """
     result = dict()
     result['db_status'] = 'active'
-
+    status_code = 200
     for model in [LongShortUrl, UserPassword, UrlVisibility, UrlInfo]:
         try:
             check_long_short_url_query = select(model)
@@ -62,15 +69,16 @@ async def ping_db(
             logger.error(f'CONNECT ERROR TO DB: {e}')
             result[model.__tablename__] = 'connection error'
             result['db_status'] = 'inactive'
+            status_code = 503
 
-    return result
+    return JsonEntity(body=result, status_code=status_code)
 
 
-@admin_router.get('/user/status')
+@admin_router.get('/user/status', response_model=list[JsonEntity])
 async def get_links_status(
         session: AsyncSession = Depends(get_session),
         params: dict = Depends(paginator_response),
-) -> list[dict[str, str]]:
+) -> list[JsonEntity]:
     """
     Корутина для проверки статусов.
     Возвращает список из словарей с полями
@@ -97,19 +105,20 @@ async def get_links_status(
             record['type'] = 'public'
         else:
             record['type'] = 'private'
-        response.append(record)
+
+        response.append(JsonEntity(body=record))
 
     return response
 
 
-@admin_router.get('/{short_url}/status')
+@admin_router.get('/{short_url}/status', response_model=JsonEntity | list[Any])
 async def get_short_url_statistics(
         short_url: str,
         full_info: Optional[bool] = False,
         limit: Optional[int] = PAGINATOR_LIMIT,
         offset: Optional[int] = PAGINATOR_OFFSET,
         session: AsyncSession = Depends(get_session)
-) -> list | dict:
+) -> JsonEntity | list[Any]:
     """
     Корутина для получения статистики переходов.
     При использовании без параметров возвращает количество
@@ -118,6 +127,24 @@ async def get_short_url_statistics(
     с указанной ссылкой.
     Пример: bmywdm/status?full_info=True&limit=10&offset=1
     """
+    check_url_query = (
+        select(UrlInfo).where(
+            UrlInfo.short_url == short_url
+        )
+    )
+
+    is_url_exist = (
+        await session.execute(exists(check_url_query).select())
+    ).all()[0][0]
+    if not is_url_exist:
+        return JsonEntity(
+            body={
+                'url': short_url,
+                'error': 'Not found',
+            },
+            status_code=404
+        )
+
     if full_info:
         get_info_query = select(UrlInfo)
         get_info_query_result = (await session.execute(get_info_query)).all()
@@ -135,7 +162,9 @@ async def get_short_url_statistics(
     else:
         logger.info('action cnt')
         action_cnt = await get_cnt_action_with_link(short_url, session)
-        return {
-            'url': f'{HOST}:{PORT}/{short_url}',
-            'count of transitions': action_cnt
-        }
+        return JsonEntity(
+            body={
+                'url': f'{HOST}:{PORT}/{short_url}',
+                'count of transitions': str(action_cnt)
+            }
+        )

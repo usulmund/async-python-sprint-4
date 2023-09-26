@@ -49,7 +49,6 @@ class UserPassword(Base):
         )
 
 
-# пользователь будет вводить юзернэйм
 class UrlVisibility(Base):
     """
     Модель, хранящая информацию,
@@ -58,9 +57,7 @@ class UrlVisibility(Base):
     """
     __tablename__ = 'url_visibility'
     url = Column(String(200), primary_key=True)
-    users = Column(String(500), nullable=False)  # all or username + other
-    # password = Column(String(50), nullable=False)
-    # created_at = Column(DateTime, index=True, default=datetime.utcnow)
+    users = Column(String(500), nullable=False)
     __mapper_args__ = {"eager_defaults": True}
 
     def __repr__(self):

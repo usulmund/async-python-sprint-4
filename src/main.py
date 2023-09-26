@@ -8,13 +8,15 @@ import asyncio
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from alembic import command
+from alembic.config import Config
 
 from core import config
 from core.config import app_settings
-
-from db.db import engine
+from db.db import engine, DSN
 from models.base import Base
 from api.base_router import router
+
 
 app = FastAPI(
     title=app_settings.app_title,
@@ -35,35 +37,23 @@ async def reset_database():
         await conn.run_sync(Base.metadata.create_all)
 
 
-"""
-* Запуск контейнера с БД:
-docker run \
-  --rm   \
-  --name postgres-fastapi \
-  -p 5432:5432 \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=collection \
-  -d postgres:14.5
-
-* Сброс базы данных:
-    python3 main.py --reset_db
-
-* Тестирование:
-    pytest
-
-* Запуск сервиса
-    python3 main.py
-
-"""
+async def apply_migration():
+    """
+    Корутина для применения миграций с помощью alembic.
+    """
+    alembic_cfg = Config('alembic.ini')
+    alembic_cfg.set_main_option('sqlalchemy.url', DSN)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, command.upgrade, alembic_cfg, 'head')
 
 
 if __name__ == '__main__':
-    if sys.argv[-1] == '--reset_db':
-        asyncio.run(reset_database())
-    else:
-        uvicorn.run(
-            'main:app',
-            host=config.PROJECT_HOST,
-            port=config.PROJECT_PORT,
-        )
+
+    if sys.argv[-1] != '--migration-off':
+        asyncio.run(apply_migration())
+
+    uvicorn.run(
+        'main:app',
+        host=config.PROJECT_HOST,
+        port=config.PROJECT_PORT,
+    )
